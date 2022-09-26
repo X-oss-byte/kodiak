@@ -6,6 +6,7 @@ RUN apt update && \
     git && \
   pip install \
     --no-cache-dir \
+    cryptography===37.0.4 \
     poetry===1.1.13 && \
   poetry config virtualenvs.in-project true && \
   groupadd kodiak && \
