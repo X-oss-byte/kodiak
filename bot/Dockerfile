@@ -15,6 +15,8 @@ RUN apt update && \
 
 WORKDIR /var/app
 
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
 COPY --chown=kodiak pyproject.toml poetry.lock /var/app
 
 # install deps
