@@ -3,7 +3,7 @@ version: 2
 jobs:
   bot_test:
     docker:
-      - image: python:3.7
+      - image: python:3.7-slim@sha256:48876a8a7db7ce3af5836ac638dc202f4589d300dc666f1d2507ddcda6cb5ce4
         auth:
           username: $DOCKER_USER
           password: $DOCKER_PASS
