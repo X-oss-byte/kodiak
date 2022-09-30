@@ -1,4 +1,4 @@
-FROM python:3.7-slim@sha256:e720c669cd7188d6a7e36e567be6bde9feb931d66219f1e4ba2caeb30e35d2cd
+FROM python:3.7-slim@sha256:48876a8a7db7ce3af5836ac638dc202f4589d300dc666f1d2507ddcda6cb5ce4
 
 RUN apt update && \
   apt-get install --no-install-recommends -y \
