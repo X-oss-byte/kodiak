@@ -109,9 +109,7 @@ def dep_versions_from_renovate_pr_body(body: str) -> MatchType | None:
     the batch. For example, if the batch contained a "minor" and "major" update,
     we'd return the larger of the two, "major".
     """
-    largest_match_type: MatchType | None = None
-    if "| lockFileMaintenance |" in body:
-        largest_match_type = "patch"
+    largest_match_type = "patch" if "| lockFileMaintenance |" in body else None
     for match in renovate_body_regex.finditer(body):
         group = match.groupdict()
         if "old_version" not in group or "new_version" not in group:
@@ -155,7 +153,4 @@ def dep_versions_from_pr(pr: PRLike) -> MatchType | None:
         return match_type
 
     match_type = dep_versions_from_dependabot_pr_body(pr.body)
-    if match_type is not None:
-        return match_type
-
-    return dep_version_from_title(pr.title)
+    return dep_version_from_title(pr.title) if match_type is None else match_type

@@ -570,7 +570,7 @@ class TokenResponse(BaseModel):
         return self.expires_at - timedelta(minutes=5) < datetime.now(timezone.utc)
 
 
-installation_cache: MutableMapping[str, Optional[TokenResponse]] = dict()
+installation_cache: MutableMapping[str, Optional[TokenResponse]] = {}
 
 # TODO(sbdchd): pass logging via TLS or async equivalent
 
@@ -705,8 +705,7 @@ def get_check_runs(*, pr: Dict[str, Any]) -> List[CheckRun]:
             check_suite_nodes = commit_node["commit"]["checkSuites"]["nodes"]
             for check_run_node in check_suite_nodes:
                 check_run_nodes = check_run_node["checkRuns"]["nodes"]
-                for check_run in check_run_nodes:
-                    check_run_dicts.append(check_run)
+                check_run_dicts.extend(iter(check_run_nodes))
     except (KeyError, TypeError):
         pass
 
@@ -801,14 +800,15 @@ class ApiFeatures:
 
 
 def has_body_html_error(errors: list[GraphQLError]) -> bool:
-    for error in errors:
-        if (
+    return any(
+        (
             error.get("type") == "FORBIDDEN"
-            and error.get("message") == "Resource not accessible by integration"
+            and error.get("message")
+            == "Resource not accessible by integration"
             and error.get("path") == ["repository", "pullRequest", "headRef"]
-        ):
-            return True
-    return False
+        )
+        for error in errors
+    )
 
 
 _api_features_cache: ApiFeatures | None = None
@@ -911,7 +911,7 @@ query {
    }
 }
 """,
-            variables=dict(),
+            variables={},
             installation_id=self.installation_id,
         )
         if res is None:

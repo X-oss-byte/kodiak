@@ -130,8 +130,8 @@ async def status_event(queue: WebhookQueueProtocol, status_event: StatusEvent) -
     )
 
     async with Client(
-        owner=owner, repo=repo, installation_id=installation_id
-    ) as api_client:
+            owner=owner, repo=repo, installation_id=installation_id
+        ) as api_client:
         if len(refs) == 0:
             # when a pull request is from a fork the status event will not have
             # any `branches`, so to be able to trigger evaluation of the PR, we
@@ -159,7 +159,7 @@ async def status_event(queue: WebhookQueueProtocol, status_event: StatusEvent) -
                         repo_name=repo,
                         pull_request_number=pr.number,
                         target_name=pr.base.ref,
-                        installation_id=str(installation_id),
+                        installation_id=installation_id,
                     )
                 )
         for event in all_events:
@@ -281,7 +281,7 @@ class WebhookEvent(BaseModel):
         return get_merge_queue_name(self)
 
     def get_merge_target_queue_name(self) -> str:
-        return self.get_merge_queue_name() + ":target"
+        return f"{self.get_merge_queue_name()}:target"
 
     def get_webhook_queue_name(self) -> str:
         return get_webhook_queue_name(self)
@@ -384,7 +384,7 @@ async def process_repo_queue(log: structlog.BoundLogger, queue_name: str) -> Non
     target_name = webhook_event.get_merge_target_queue_name()
     # mark this PR as being merged currently. we check this elsewhere to set proper status codes
     await redis_bot.set(target_name, webhook_event.json())
-    await redis_bot.set(target_name + ":time", str(score))
+    await redis_bot.set(f"{target_name}:time", str(score))
 
     async def dequeue() -> None:
         await redis_bot.zrem(webhook_event.get_merge_queue_name(), webhook_event.json())
@@ -414,7 +414,7 @@ async def process_repo_queue(log: structlog.BoundLogger, queue_name: str) -> Non
     )
     log.info("merge completed, remove target marker", target_name=target_name)
     await redis_bot.delete(target_name)
-    await redis_bot.delete(target_name + ":time")
+    await redis_bot.delete(f"{target_name}:time")
 
 
 async def repo_queue_consumer(*, queue_name: str) -> typing.NoReturn:
@@ -441,12 +441,7 @@ T = typing.TypeVar("T")
 
 
 def find_position(x: typing.Iterable[T], v: T) -> typing.Optional[int]:
-    count = 0
-    for item in x:
-        if item == v:
-            return count
-        count += 1
-    return None
+    return next((count for count, item in enumerate(x) if item == v), None)
 
 
 ONE_DAY = int(timedelta(days=1).total_seconds())

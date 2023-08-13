@@ -134,9 +134,9 @@ def get_active_merge_queues(*, install_id: str) -> Mapping[RepositoryName, List[
                 )
             )
 
-        pull_requests = sorted(pull_requests, key=lambda x: x.added_at_timestamp or 0)
-        # only add report targets that have pull requests merging or in queue.
-        if pull_requests:
+        if pull_requests := sorted(
+            pull_requests, key=lambda x: x.added_at_timestamp or 0
+        ):
             queues[RepositoryName(owner=org, repo=repo)].append(
                 Queue(branch=branch, pull_requests=pull_requests)
             )

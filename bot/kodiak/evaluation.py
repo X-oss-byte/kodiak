@@ -92,9 +92,7 @@ def get_body_content(
                 body = body[: end_index + len(cut_body_after)]
                 if cut_body_and_text:
                     body = body.replace(cut_body_after, "", 1)
-        if strip_html_comments:
-            return strip_html_comments_from_markdown(body)
-        return body
+        return strip_html_comments_from_markdown(body) if strip_html_comments else body
     if body_type is BodyText.plain_text:
         return pull_request.bodyText
     if body_type is BodyText.html:
@@ -143,10 +141,9 @@ def get_coauthor_trailers(
     Deduplicate coauthors and convert to strings.
     """
     coauthor_trailers = []
-    deduped_coauthors: Dict[PullRequestCommitUser, bool] = {}
-    for dupe_coauthor in coauthors:
-        deduped_coauthors[dupe_coauthor] = True
-
+    deduped_coauthors: Dict[PullRequestCommitUser, bool] = {
+        dupe_coauthor: True for dupe_coauthor in coauthors
+    }
     for coauthor in deduped_coauthors:
         if coauthor.databaseId is None:
             continue
@@ -221,17 +218,13 @@ def get_merge_body(
                     )
                 )
         if config.merge.message.include_coauthors:
-            for commit in commits:
-                if (
-                    # only use commits that have identified authors.
-                    commit.author is None
-                    or commit.author.user is None
-                    # ignore merge commits. They will have more than one parent.
-                    or commit.parents.totalCount > 1
-                ):
-                    continue
-                coauthors.append(commit.author.user)
-
+            coauthors.extend(
+                commit.author.user
+                for commit in commits
+                if commit.author is not None
+                and commit.author.user is not None
+                and commit.parents.totalCount <= 1
+            )
         coauthor_trailers = get_coauthor_trailers(
             coauthors=coauthors,
             include_pull_request_author=config.merge.message.include_pull_request_author,
