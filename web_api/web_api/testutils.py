@@ -16,10 +16,7 @@ class TestClient(DjangoTestClient):
         # Create a fake request to store login details.
         request = HttpRequest()
 
-        if self.session:
-            request.session = self.session
-        else:
-            request.session = engine.SessionStore()
+        request.session = self.session if self.session else engine.SessionStore()
         auth.login(user, request)
 
         # Save the session values.

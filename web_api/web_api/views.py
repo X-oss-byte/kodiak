@@ -349,24 +349,25 @@ def update_stripe_customer_info(
         or payload.name is not None
         or payload.address is not None
     ):
-        if not request.user.can_edit_subscription(account):
+        if request.user.can_edit_subscription(account):
+            account.update_billing_info(
+                email=payload.email,
+                name=payload.name,
+                address=(
+                    Address(
+                        line1=payload.address.line1,
+                        city=payload.address.city,
+                        country=payload.address.country,
+                        line2=payload.address.line2,
+                        postal_code=payload.address.postalCode,
+                        state=payload.address.state,
+                    )
+                    if payload.address is not None
+                    else None
+                ),
+            )
+        else:
             raise PermissionDenied
-        account.update_billing_info(
-            email=payload.email,
-            name=payload.name,
-            address=(
-                Address(
-                    line1=payload.address.line1,
-                    city=payload.address.city,
-                    country=payload.address.country,
-                    line2=payload.address.line2,
-                    postal_code=payload.address.postalCode,
-                    state=payload.address.state,
-                )
-                if payload.address is not None
-                else None
-            ),
-        )
     return HttpResponse(status=204)
 
 
@@ -502,9 +503,7 @@ def get_subscription_info(request: AuthedHttpRequest, team_id: str) -> JsonRespo
 def plan_id_from_period(period: Literal["month", "year"]) -> str:
     if period == "month":
         return cast(str, settings.STRIPE_PLAN_ID)
-    if period == "year":
-        return cast(str, settings.STRIPE_ANNUAL_PLAN_ID)
-    return None
+    return cast(str, settings.STRIPE_ANNUAL_PLAN_ID) if period == "year" else None
 
 
 class FetchProrationModal(pydantic.BaseModel):
@@ -768,8 +767,7 @@ def process_login_request(request: HttpRequest) -> Union[Success, Error]:
             error="OAuthServerError", error_description="Failed to fetch access token."
         )
     access_res_data = dict(parse_qsl(access_res.text))
-    access_token_error = access_res_data.get("error")
-    if access_token_error:
+    if access_token_error := access_res_data.get("error"):
         return Error(
             error=access_token_error,
             error_description=access_res_data.get("error_description", ""),

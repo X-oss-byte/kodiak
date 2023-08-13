@@ -1022,7 +1022,7 @@ def test_activity_with_merge_queues(
             "target_name": "main",
         }
     )
-    redis.set(queue + ":target", merging_pr)
+    redis.set(f"{queue}:target", merging_pr)
     waiting_pr = json.dumps(
         {
             "repo_owner": "sbdchd",
@@ -1907,12 +1907,12 @@ def test_stripe_webhook_handler_checkout_session_complete_setup(mocker: Any) -> 
 def equal_subscriptions(
     a: StripeCustomerInformation, b: StripeCustomerInformation
 ) -> bool:
-    for field_name in (
-        field.attname for field in StripeCustomerInformation._meta.fields
-    ):
-        if getattr(a, field_name) != getattr(b, field_name):
-            return False
-    return True
+    return all(
+        getattr(a, field_name) == getattr(b, field_name)
+        for field_name in (
+            field.attname for field in StripeCustomerInformation._meta.fields
+        )
+    )
 
 
 @pytest.mark.django_db

@@ -51,9 +51,7 @@ def _get_event_and_hint(
     original_event_dict = event_dict.copy()
 
     exc_info = event_dict.pop("exc_info", sys.exc_info())
-    has_exc_info = exc_info and exc_info != (None, None, None)
-
-    if has_exc_info:
+    if has_exc_info := exc_info and exc_info != (None, None, None):
         event, hint = event_from_exception(exc_info)
     else:
         event = {}
